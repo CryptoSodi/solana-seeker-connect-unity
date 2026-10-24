@@ -1,0 +1,25 @@
+.screen { background-color: rgb(10, 18, 27); color: rgb(232, 239, 244); flex-grow: 1; }
+.page { padding: 42px 24px 42px 24px; max-width: 720px; width: 100%; align-self: center; }
+Label { white-space: normal; }
+.eyebrow { color: rgb(108, 219, 182); font-size: 12px; letter-spacing: 2px; margin-bottom: 16px; }
+.title { font-size: 42px; -unity-font-style: bold; }
+.subtitle { font-size: 25px; color: rgb(157, 178, 196); margin-bottom: 12px; }
+.muted { color: rgb(158, 177, 192); font-size: 15px; margin-bottom: 12px; }
+.status { align-self: flex-start; background-color: rgb(28, 53, 52); color: rgb(138, 238, 199); border-radius: 18px; padding: 8px 15px; margin-top: 20px; margin-bottom: 24px; font-size: 13px; }
+.card { background-color: rgb(19, 31, 43); border-radius: 16px; padding: 20px; margin-bottom: 18px; border-width: 1px; border-color: rgb(36, 53, 69); }
+.section-title { color: rgb(145, 169, 186); font-size: 12px; letter-spacing: 2px; margin-bottom: 18px; }
+Button { min-height: 50px; margin: 5px 0; border-radius: 9px; background-color: rgb(35, 52, 68); color: rgb(239, 245, 249); border-width: 0; font-size: 16px; padding: 10px; }
+Button:hover { background-color: rgb(46, 69, 86); }
+Button.primary { background-color: rgb(139, 236, 195); color: rgb(10, 30, 26); -unity-font-style: bold; }
+Button:disabled { opacity: 0.4; }
+TextField { margin: 8px 0; flex-direction: column; }
+TextField > .unity-base-field__label { color: rgb(157, 178, 196); margin-bottom: 7px; font-size: 13px; }
+.unity-base-text-field__input { background-color: rgb(10, 20, 30); color: rgb(231, 240, 246); border-radius: 6px; padding: 12px; font-size: 16px; min-height: 42px; }
+.network { color: rgb(138, 238, 199); font-size: 13px; margin-top: 12px; }
+.address { color: rgb(173, 197, 217); font-size: 13px; margin-top: 14px; margin-bottom: 12px; }
+.message { font-size: 18px; margin-bottom: 14px; }
+.transaction { min-height: 120px; }
+.logs { height: 190px; }
+.log-text { font-size: 13px; color: rgb(176, 199, 216); }
+.notice { color: rgb(245, 205, 130); margin-bottom: 18px; font-size: 14px; }
+.footer { color: rgb(112, 139, 158); font-size: 12px; -unity-text-align: middle-center; margin-top: 10px; }

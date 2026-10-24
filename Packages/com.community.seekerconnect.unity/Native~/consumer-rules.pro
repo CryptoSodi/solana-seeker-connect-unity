@@ -1,0 +1,3 @@
+-keep class com.community.seekerconnect.SeekerBridge { public *; }
+-keep class com.community.seekerconnect.WalletHostActivity { *; }
+-keep class com.unity3d.player.UnityPlayer { public static void UnitySendMessage(java.lang.String,java.lang.String,java.lang.String); }
