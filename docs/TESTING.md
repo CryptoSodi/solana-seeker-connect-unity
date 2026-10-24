@@ -12,6 +12,8 @@ After building, run `scripts/verify-apk.ps1` to verify the APK signature, inspec
 
 ## Real Seeker checklist (required before production use)
 
+For the current demo on an ordinary Android phone: open Mock MWA Wallet, tap **Authenticate**, return to the demo, then tap **Connect with MWA test wallet**. The demo opts into Devnet-only MWA testing. For the certified Seeker checklist below, initialize the SDK with its default `allowMwaTesting = false`; the generic test mode cannot validate the certified-wallet gate.
+
 1. Install a development APK on a Seeker with its wallet configured. Use a genuine app identity and accessible icon. Do not share seed phrases or private keys with the app.
 2. Connect: approve in the wallet; compare the returned Base58 address with the selected wallet account. An initial decline must show an error and no successful session.
 3. Sign the demo message. Independently verify the displayed 64-byte Ed25519 signature against UTF-8 `Hello from Unity Seeker Connect!` and the displayed public key.

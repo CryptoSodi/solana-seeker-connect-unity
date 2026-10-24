@@ -20,6 +20,8 @@ Call every entry point on Unity's main thread after runtime initialization. The 
 
 `SeekerConnectConfig` has `appName`, `identityUri` (absolute HTTPS), `iconPath` (relative URI), `chain` (`solana:devnet` by default), and `timeoutMs` (10000–120000). Do not mutate configuration expecting a running SDK to change. Initialize once.
 
+`allowMwaTesting` defaults to `false`. Explicitly set it to `true` to allow generic MWA wallets such as Mock MWA Wallet on ordinary Android devices. This option requires Devnet and is validated on both sides of JNI. Testing-mode authorizations are isolated from the certified-only cache. The demo enables this option and labels its UI accordingly.
+
 `WalletSession` contains `chain`, `accounts`, `Account` (first authorized account), and `supportsSignAndSend`. `WalletAccount` has `address`, `publicKeyBase64`, `PublicKey`, and optional `label`. Treat snapshot fields/arrays as read-only. The wrapper signs with the first authorized account.
 
 `WalletSignature` exposes `Address`, `Signature`, `Base64`, and `SignedPayload`. `SignedPayload` is populated for messages, not sign-and-send. It does not represent network confirmation.

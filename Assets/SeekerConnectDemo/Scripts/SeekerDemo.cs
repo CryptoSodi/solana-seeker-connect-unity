@@ -22,19 +22,21 @@ public sealed class SeekerDemo : MonoBehaviour
         var page = new VisualElement(); page.AddToClassList("page"); scroll.Add(page);
         AddLabel(page, "SOLANA MOBILE  /  COMMUNITY SDK", "eyebrow");
         AddLabel(page, "Seeker Connect", "title");
-        AddLabel(page, "Unity Demo", "subtitle");
+        AddLabel(page, "Unity Demo / MWA testing", "subtitle");
+        AddLabel(page, "MWA TESTING MODE — Devnet only. Supports Mock MWA Wallet on ordinary Android phones. This is not a certified Seeker connection test.", "notice");
         AddLabel(page, "Your wallet. Your approval. Real signatures.", "muted");
         state = AddLabel(page, "DISCONNECTED", "status");
 #if UNITY_EDITOR
-        AddLabel(page, "EDITOR PREVIEW — Wallet operations are unavailable. Build for a Seeker device. No simulated wallet.", "notice");
+        AddLabel(page, "EDITOR PREVIEW — Wallet operations require an Android build and a compatible wallet. No simulated wallet.", "notice");
 #endif
         var setup = Card(page, "01  /  APP IDENTITY");
         AddLabel(setup, "Enter your own HTTPS website. Its icon will identify this app in the wallet approval screen.", "muted");
-        identity = new TextField("Identity URI") { value = "" }; setup.Add(identity);
-        icon = new TextField("Relative icon") { value = "icon.png" }; setup.Add(icon);
+        identity = new TextField("Identity URI") { value = "https://github.com/CryptoSodi/solana-seeker-connect-unity" }; setup.Add(identity);
+        icon = new TextField("Relative icon") { value = "/favicon.ico" }; setup.Add(icon);
         AddLabel(setup, "Network: Devnet • No mainnet transfers", "network");
         var wallet = Card(page, "02  /  WALLET");
-        Button(wallet, "Connect with Seeker", async () => { await Initialize(); await SeekerConnectManager.ConnectAsync(); Log("Wallet authorized."); }, true);
+        AddLabel(wallet, "Open Mock MWA Wallet and tap Authenticate first, then return here to connect.", "muted");
+        Button(wallet, "Connect with MWA test wallet", async () => { await Initialize(); await SeekerConnectManager.ConnectAsync(); Log("Test wallet authorized (Devnet)."); }, true);
         Button(wallet, "Restore Session", async () => { await Initialize(); var session = await SeekerConnectManager.RestoreSessionAsync(); Log(session == null ? "No stored session." : "Cached authorization restored; signing will reauthorize with the wallet."); });
         address = AddLabel(wallet, "No wallet connected", "address");
         Button(wallet, "Copy wallet address", () => { var value = SeekerConnectManager.Session?.Account?.address; if (value == null) throw new InvalidOperationException("Connect first."); GUIUtility.systemCopyBuffer = value; Log("Address copied."); return Task.CompletedTask; });
@@ -69,7 +71,7 @@ public sealed class SeekerDemo : MonoBehaviour
     async Task Initialize()
     {
         if (initialized) return;
-        await SeekerConnectManager.InitializeAsync(new SeekerConnectConfig { identityUri = identity.value.Trim(), iconPath = icon.value.Trim() });
+        await SeekerConnectManager.InitializeAsync(new SeekerConnectConfig { identityUri = identity.value.Trim(), iconPath = icon.value.Trim(), allowMwaTesting = true });
         initialized = true; identity.SetEnabled(false); icon.SetEnabled(false);
         Log("Native SDK initialized. Availability: " + await SeekerConnectManager.GetWalletAvailabilityAsync());
     }

@@ -13,6 +13,8 @@ namespace Community.SeekerConnect
         public string iconPath = "icon.png";
         public string chain = "solana:devnet";
         public int timeoutMs = 120000;
+        // Explicit opt-in for development with Mock MWA Wallet on ordinary Android devices.
+        public bool allowMwaTesting = false;
 
         public void Validate()
         {
@@ -24,6 +26,8 @@ namespace Community.SeekerConnect
             if (chain != "solana:devnet" && chain != "solana:testnet" && chain != "solana:mainnet")
                 throw new ArgumentException("Use solana:devnet, solana:testnet, or solana:mainnet.");
             if (timeoutMs < 10000 || timeoutMs > 120000) throw new ArgumentOutOfRangeException(nameof(timeoutMs));
+            if (allowMwaTesting && chain != "solana:devnet")
+                throw new ArgumentException("MWA testing mode is restricted to Devnet.");
         }
     }
 

@@ -7,6 +7,12 @@ namespace Community.SeekerConnect.Tests
 {
     public sealed class BridgeTests
     {
+        [Test] public void GenericMwaRequiresExplicitOptIn()
+        { Assert.False(new SeekerConnectConfig().allowMwaTesting); }
+        [Test] public void MwaTestingRejectsMainnet()
+        { Assert.Throws<ArgumentException>(() => new SeekerConnectConfig { identityUri = "https://example.org", allowMwaTesting = true, chain = "solana:mainnet" }.Validate()); }
+        [Test] public void MwaTestingAcceptsDevnet()
+        { new SeekerConnectConfig { identityUri = "https://example.org", allowMwaTesting = true }.Validate(); }
         [Test] public async Task OutOfOrderRepliesStayWithTheirRequests()
         {
             var router = new RequestRouter(); var first = router.Add("a"); var second = router.Add("b");

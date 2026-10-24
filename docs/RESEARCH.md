@@ -24,7 +24,7 @@ sdk.disconnect()
 sdk.authorization.value
 ```
 
-The official source defines `WalletAvailability.CERTIFIED`, `OTHER`, and `NONE`. Its transport can fall back to generic MWA. This wrapper explicitly gates wallet operations on `CERTIFIED`, satisfying the Seeker-specific demo requirement without pretending PSG1 or generic wallets are certified.
+The official source defines `WalletAvailability.CERTIFIED`, `OTHER`, and `NONE`. Its transport can fall back to generic MWA. This wrapper defaults to `CERTIFIED` only. The demo now explicitly opts into Devnet-only MWA testing, allowing `OTHER` without calling it certified or assuming PSG1 compatibility.
 
 `connect` first restores authorization; `restore` reads cache without wallet interaction. Signing establishes a new transport session and reauthorizes. `disconnect` clears cache locally, not wallet-side revocation. Message signatures are appended to message bytes in the returned MWA signed payload. These semantics are reflected in the wrapper and documentation.
 

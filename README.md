@@ -4,7 +4,7 @@ A reusable Unity package and Android demo for Solana Mobile's **official Kotlin 
 
 **This is an independently developed community wrapper, not an official Solana Mobile Unity SDK.** There are no simulated wallet responses. Editor Play mode previews the UI and explicitly reports that Android wallet operations are unavailable.
 
-<img src="docs/images/editor-preview.png" width="320" alt="Actual Unity Play-mode UI preview, explicitly labeled as unable to connect a wallet in the Editor" />
+The demo now enables **Devnet MWA testing mode**, so Mock MWA Wallet can be used on ordinary Android phones. The reusable SDK still defaults to certified Seeker wallets only. Testing mode uses the official SDK's generic MWA fallback, not fabricated responses.
 
 ## Validation status
 
@@ -15,8 +15,8 @@ See [the validation record](docs/VALIDATION.md) for build results and the exact 
 1. Clone this repository and open its root as a Unity project using **6000.6.0f1**, with Android Build Support, SDK/NDK, and OpenJDK installed.
 2. Open `Assets/SeekerConnectDemo/Scenes/SeekerConnectDemo.unity`.
 3. Choose **Seeker Connect → Build Android APK**, or use the command below. The output is `Builds/SeekerConnectDemo.apk`.
-4. Install the APK on a Solana Seeker. At runtime enter **your own HTTPS app identity URI** and the relative path of an icon hosted there. The demo intentionally ships with no borrowed or misleading identity.
-5. Tap **Connect with Seeker**, approve in the wallet, and check the returned address. Tap **Sign Message**, approve, and inspect the Base64 Ed25519 signature.
+4. Install the APK on your Android phone. Open Mock MWA Wallet and tap **Authenticate**, then return to the demo. The editable demo identity points to this project's GitHub repository; supply your own website and hosted icon for your application.
+5. Tap **Connect with MWA test wallet**, approve in the wallet, and check the returned address. Tap **Sign Message**, approve, and inspect the Base64 Ed25519 signature. A Seeker is still needed to validate the certified-wallet experience.
 
 ```powershell
 unity run . --timeout 1800 -- -buildTarget Android -executeMethod DemoBuilder.BuildApk
@@ -101,7 +101,7 @@ Unity's installed `UnityPlayerActivity` directly extends `android.app.Activity`,
 
 The package resolves `com.solanamobile:seeker-connect:0.2.0` from Maven Central, including its core, AndroidX activity, and MWA client transitive dependencies. The build uses AGP 9.0.0, Gradle 9.1.0, Kotlin 2.4.10, coroutines 1.11.0, and lifecycle 2.11.0. Exact SDK API signatures were checked against official source and the published source artifact. [Research notes and references](docs/RESEARCH.md).
 
-The Seeker provider rejects `OTHER` and `NONE` wallet availability. Generic MWA, Jupiter Wallet, and Play Solana PSG1 support are **not implemented or assumed**. The native transport boundary and byte-oriented C# API allow a future separate provider. Solana.Unity-SDK can optionally be used by the host game to construct transactions; it is not a dependency and its generic MWA path is not substituted for Seeker Connect.
+The default Seeker provider rejects `OTHER` and `NONE` wallet availability. Set `allowMwaTesting = true` with `chain = "solana:devnet"` to allow `OTHER` through the official SDK's MWA fallback. Missing wallets are still rejected, and test authorizations use a separate cache from certified-only mode. Jupiter Wallet and Play Solana PSG1 compatibility is not assumed. Solana.Unity-SDK can optionally be used by the host game to construct transactions; it is not a dependency.
 
 ## Documentation
 

@@ -32,4 +32,6 @@ Sign-and-send returns the wallet's 64-byte submission signature only. RPC confir
 
 ## Extensibility
 
+The demo opts into `allowMwaTesting`, using the official SDK's generic MWA fallback on Devnet. Missing wallets are never accepted. The SDK configuration remains certified-only by default; its production cache is separate from the testing cache. This mode exercises real Android wallet communication but does not certify a Seeker device flow.
+
 The C# API accepts standard serialized Solana bytes and the Kotlin bridge is the sole provider-specific boundary. A future `IWalletProvider` adapter can expose the same account/signing models for generic MWA or Jupiter. Do not change the current certified-wallet gate silently. PSG1 support requires separate device/provider research and testing; this implementation makes no compatibility claim.

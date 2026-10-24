@@ -38,6 +38,10 @@ class BridgeLifecycleTest {
         val result = invoke("bad", "initialize", """{"identityUri":"http://example.org","appName":"Test","iconPath":"icon.png","chain":"solana:devnet"}""")
         assertEquals("INVALID_INPUT", result.getString("code"))
     }
+    @Test fun testingModeRejectsMainnetAtNativeBoundary() {
+        val result = invoke("mainnet", "initialize", """{"identityUri":"https://example.org","appName":"Test","iconPath":"icon.png","chain":"solana:mainnet","allowMwaTesting":true}""")
+        assertEquals("INVALID_INPUT", result.getString("code"))
+    }
     @Test fun unavailableWalletNeverReportsCertified() {
         initialize()
         assertEquals("NONE", invoke("available", "availability").getString("availability"))

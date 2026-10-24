@@ -2,6 +2,8 @@
 
 Date: **2026-10-25 (Asia/Karachi)**. Platform: Windows x64.
 
+The table and APK hash below record the original 0.1 build. The updated 0.1.1 demo enables explicit Devnet MWA testing; its follow-up record appears at the end of this document.
+
 | Check | Result |
 | --- | --- |
 | Unity editor | Installed **6000.6.0f1** (Unity 6.6; not an LTS editor) |
@@ -48,11 +50,23 @@ The first native build resolves external Maven dependencies; the first IL2CPP bu
 ## Remaining verification and limits
 
 - Complete the [Seeker device checklist](TESTING.md) before treating wallet behavior as production verified. Real approval/rejection, app switching, device process recreation, and cryptographic signature checks remain unverified on hardware.
-- Supply your real HTTPS identity and hosted icon. The demo intentionally cannot authorize using an unconfigured identity.
+- Supply your own HTTPS identity and hosted icon for your app. The updated demo uses this project's GitHub identity.
 - Only Unity 6000.6.0f1/toolchain recorded here was built. Older Unity 6 LTS versions, other operating systems, and production/minified builds are not yet validated.
-- Generic MWA/Jupiter/PSG1 support is not implemented; only certified availability is accepted.
+- Certified availability is required by default. The updated demo explicitly enables Devnet-only generic MWA testing; other wallet integrations remain unverified.
 - Restore means cached authorization; the wallet revalidates it during signing. Disconnect clears local cache, not the wallet's grant.
 - Sign-and-send exposes submission only and was not exercised with a wallet. Callers must confirm via RPC and reconcile ambiguous failures before any retry.
 - Android backup protection applies to all host-app SharedPreferences. Integrators with existing backup policies should retain equivalent token exclusions.
 
 This is a source-complete integration with verified local compilation/builds and the tests described above, not a claim that a real wallet flow was exercised.
+
+## Devnet MWA testing update — 0.1.1
+
+The demo enables `allowMwaTesting` to exercise the same official Seeker Connect SDK through its generic MWA fallback on ordinary Android devices. Testing authorizations use a separate cache namespace; the option rejects non-Devnet chains in both C# and Kotlin.
+
+- Native tests: 21 passed; Unity Edit Mode: 12 passed; Unity Play Mode: 2 passed (35 total).
+- Android IL2CPP ARM64 build and APK signature/content verification passed.
+- APK version 0.1.1, version code 2, installed successfully on Samsung SM-S918B using `adb install -r`.
+- Existing Mock MWA Wallet version 1.0.1 retained.
+- APK SHA-256: `2b86f6edadcde504b1344ec445ee5706871e31a19a82083f75b498989914eb08`.
+
+Wallet approval, signing, and session restoration still require the interactive device checklist. Certified Seeker routing requires a physical Seeker; the Samsung fallback does not validate that route.
