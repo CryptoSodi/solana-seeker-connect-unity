@@ -55,7 +55,8 @@ public static class DemoBuilder
     {
         Configure();
         PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Disabled;
-        var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions { scenes = new[] { ScenePath }, locationPathName = "Builds/WebGL", target = BuildTarget.WebGL, options = BuildOptions.Development });
+        PlayerSettings.WebGL.template = "PROJECT:Seeker";
+        var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions { scenes = new[] { ScenePath }, locationPathName = "Builds/WebGL", target = BuildTarget.WebGL, options = BuildOptions.None });
         if (report.summary.result != BuildResult.Succeeded) throw new BuildFailedException("WebGL build failed: " + report.summary.result);
     }
     [MenuItem("Seeker Connect/Export Android Gradle Project")]

@@ -20,7 +20,10 @@ cd web
 node serve.js
 ```
 
-Open http://127.0.0.1:8090. Production hosting must use HTTPS and serve `.wasm`
+Open http://127.0.0.1:8090 in Chrome. The demo builds a release player with a
+full-window custom template, without the default Unity footer, player frame or
+development controls. Its UI uses CSS-pixel sizing on desktop and mobile.
+Production hosting must use HTTPS and serve `.wasm`
 as `application/wasm`. The package build hook copies the bundled official SDK
 and loads it before the Unity loader; custom templates need a closing head tag.
 The bundle is included in the package, so consuming Unity projects do not need Node.
@@ -69,5 +72,10 @@ The suite covers restore after bridge recreation, disconnect, authorization
 rejection, timeout, cancellation, concurrent requests, malformed/mutated replies,
 account changes and capability gating. Sign-and-send tests only response mapping;
 the fixture does not broadcast. This is not physical Seeker or public relay validation.
+
+Chrome desktop was also checked manually against the release build on 2026-10-25:
+full-window rendering without the Unity frame/footer, initialization, empty-session
+restore, disconnect, and the disconnected signing guard passed. Chrome recorded
+no JavaScript errors. Real wallet approval was not exercised on desktop.
 
 Upstream: https://github.com/solana-mobile/seeker-connect/tree/main/js/packages/web

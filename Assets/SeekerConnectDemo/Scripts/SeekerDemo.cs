@@ -15,6 +15,14 @@ public sealed class SeekerDemo : MonoBehaviour
 
     void OnEnable()
     {
+#if UNITY_WEBGL && !UNITY_EDITOR
+        // Match CSS pixels in the full-window web template, rather than enlarging
+        // the phone layout to the width of a desktop monitor.
+        var document = GetComponent<UIDocument>();
+        document.panelSettings = Instantiate(document.panelSettings);
+        document.panelSettings.scaleMode = PanelScaleMode.ConstantPixelSize;
+        document.panelSettings.scale = 1;
+#endif
         var root = GetComponent<UIDocument>().rootVisualElement;
         root.Clear(); if (theme != null) root.styleSheets.Add(theme);
         root.AddToClassList("screen");

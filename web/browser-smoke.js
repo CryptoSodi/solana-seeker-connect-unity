@@ -2,7 +2,7 @@ import { chromium } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 await mkdir('../Logs', { recursive: true });
-const browser = await chromium.launch({ args: ['--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch({ channel: 'chrome', args: ['--enable-unsafe-swiftshader'] });
 const page = await browser.newPage({ viewport: { width: 540, height: 1000 }, isMobile: true, userAgent: 'Mozilla/5.0 (Linux; Android 16) AppleWebKit/537.36 Chrome/141.0.0.0 Mobile Safari/537.36' });
 page.on('pageerror', e => console.log('PAGE_ERROR:', e.message));
 page.on('console', m => { if (m.type() === 'error') console.log('CONSOLE_ERROR:', m.text().slice(0, 500)); });
