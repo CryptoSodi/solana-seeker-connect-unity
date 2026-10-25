@@ -15,6 +15,16 @@ class WireTest {
     @Test(expected = IllegalArgumentException::class) fun rejectsSignatureOnly() {
         Wire.signature(byteArrayOf(1), ByteArray(64))
     }
+    @Test fun acceptsDetachedSignatureOnlyInTestingMode() {
+        val signature = ByteArray(64) { it.toByte() }
+        assertArrayEquals(signature, Wire.signature(byteArrayOf(1), signature, true))
+    }
+    @Test(expected = IllegalArgumentException::class) fun testingStillRejectsModifiedMessage() {
+        Wire.signature(byteArrayOf(1), byteArrayOf(2) + ByteArray(64), true)
+    }
+    @Test(expected = IllegalArgumentException::class) fun testingRejectsTruncatedSignature() {
+        Wire.signature(byteArrayOf(1), ByteArray(63), true)
+    }
     private fun memo() = byteArrayOf(1) + ByteArray(64) + byteArrayOf(1, 0, 1, 2) + ByteArray(64) + ByteArray(32) + byteArrayOf(1, 1, 0, 2, 72, 105)
     @Test fun acceptsCompleteLegacyMemo() { Wire.transaction(memo()) }
     @Test(expected = IllegalArgumentException::class) fun rejectsTruncatedInstruction() { Wire.transaction(memo().dropLast(1).toByteArray()) }

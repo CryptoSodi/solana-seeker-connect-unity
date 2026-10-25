@@ -2,7 +2,10 @@ package com.community.seekerconnect
 
 /** Wire validation is independent of Android and is exercised by unit tests. */
 internal object Wire {
-    fun signature(message: ByteArray, signed: ByteArray): ByteArray {
+    fun signature(message: ByteArray, signed: ByteArray, allowDetachedTesting: Boolean = false): ByteArray {
+        // Mock MWA Wallet returns a detached signature instead of the MWA signed payload.
+        // Keep this compatibility exception confined to explicit development mode.
+        if (allowDetachedTesting && signed.size == 64) return signed.copyOf()
         require(signed.size == message.size + 64) { "Expected one Ed25519 signature appended to the message" }
         require(signed.copyOfRange(0, message.size).contentEquals(message)) { "Wallet changed the signed message" }
         return signed.copyOfRange(message.size, signed.size)

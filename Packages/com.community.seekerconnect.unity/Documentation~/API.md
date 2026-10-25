@@ -26,6 +26,8 @@ Call every entry point on Unity's main thread after runtime initialization. The 
 
 `WalletSignature` exposes `Address`, `Signature`, `Base64`, and `SignedPayload`. `SignedPayload` is populated for messages, not sign-and-send. It does not represent network confirmation.
 
+Devnet testing mode accepts Mock MWA Wallet's detached 64-byte message response and normalizes `SignedPayload` to the requested message followed by that signature. Default strict mode requires the standard full payload. Applications should independently verify signatures against the account public key.
+
 ## Errors
 
 Catch `SeekerConnectException` and inspect `Code`. Invalid managed inputs may throw `ArgumentException` before JNI. A cancellation token cancelled before dispatch raises `OperationCanceledException`; cancellation after dispatch is reported through the native `CANCELLED` code.

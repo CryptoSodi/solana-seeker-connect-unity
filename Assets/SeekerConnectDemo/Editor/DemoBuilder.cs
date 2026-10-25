@@ -30,8 +30,8 @@ public static class DemoBuilder
         EditorSceneManager.SaveScene(scene, ScenePath);
         EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
         PlayerSettings.companyName = "Community"; PlayerSettings.productName = "Seeker Connect Unity Demo";
-        PlayerSettings.bundleVersion = "0.1.1";
-        PlayerSettings.Android.bundleVersionCode = 2;
+        PlayerSettings.bundleVersion = "0.1.2";
+        PlayerSettings.Android.bundleVersionCode = 3;
         PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.community.seekerconnect.demo");
         PlayerSettings.SetScriptingBackend(NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
         PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;

@@ -119,8 +119,9 @@ object SeekerBridge {
                         val account = sdk.restore()?.accounts?.firstOrNull() ?: throw BridgeError("NOT_CONNECTED", "Connect a wallet first")
                         val message = decode(data.getString("payload")); require(message.size in 1..32768)
                         val signed = sdk.signMessages(host, listOf(account.address), listOf(message)).single()
-                        result.put("signature", encode(Wire.signature(message, signed)))
-                            .put("signedPayload", encode(signed)).put("address", account.address)
+                        val signature = Wire.signature(message, signed, allowMwaTesting)
+                        result.put("signature", encode(signature))
+                            .put("signedPayload", encode(message + signature)).put("address", account.address)
                     }
                     "signTransaction", "signAndSend" -> {
                         val auth = sdk.restore() ?: throw BridgeError("NOT_CONNECTED", "Connect a wallet first")

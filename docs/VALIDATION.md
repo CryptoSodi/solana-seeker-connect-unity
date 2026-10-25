@@ -2,7 +2,7 @@
 
 Date: **2026-10-25 (Asia/Karachi)**. Platform: Windows x64.
 
-The table and APK hash below record the original 0.1 build. The updated 0.1.1 demo enables explicit Devnet MWA testing; its follow-up record appears at the end of this document.
+The first table and APK hash record the original 0.1 build. Follow-up records below cover 0.1.1 testing mode and the current 0.1.2 Samsung device validation; historical limitations are superseded only by the explicitly recorded checks.
 
 | Check | Result |
 | --- | --- |
@@ -70,3 +70,28 @@ The demo enables `allowMwaTesting` to exercise the same official Seeker Connect 
 - APK SHA-256: `2b86f6edadcde504b1344ec445ee5706871e31a19a82083f75b498989914eb08`.
 
 Wallet approval, signing, and session restoration still require the interactive device checklist. Certified Seeker routing requires a physical Seeker; the Samsung fallback does not validate that route.
+
+## Samsung device validation — 0.1.2 (2026-10-25)
+
+Installed version 0.1.2 (code 3) on Samsung SM-S918B, Android 16/API 36, with existing Mock MWA Wallet 1.0.1. APK SHA-256: `fd9c24914bd17629f02de9d07c99b19dee819d7762232fce985dea532e12b3e7`.
+
+Device testing found that Mock MWA Wallet returns a detached signature for `sign_messages`, unlike the full signed payload expected by the MWA protocol and strict bridge. Added detached-response compatibility only for explicit Devnet testing mode; normalized the public signed payload. Three regression tests cover this exception, strict rejection, and malformed responses.
+
+| Check | Observed result |
+| --- | --- |
+| Initialize and availability | `Other`, as expected for generic MWA |
+| Connect and wallet approval | Connected; public account returned |
+| Copy address | Action completed and logged |
+| Sign message | Passed; independently verified with Node/OpenSSL Ed25519 |
+| Build Devnet memo | Fresh blockhash fetched and complete transaction built |
+| Sign transaction | Passed; independently verified Ed25519 signature, unchanged message, expected memo-only instruction |
+| Restore after force-stop/relaunch | Same account restored; subsequent message signature independently verified |
+| Disconnect, relaunch, restore | `No stored session`; no account restored |
+| Signing/memo construction while disconnected | Expected `NOT_CONNECTED` / connect-first error |
+| Wallet Cancel | `REQUEST_DECLINED`; later message signing succeeded |
+| Android Back during wallet prompt | `SESSION_CLOSED`; returned to demo |
+| Leave message approval unanswered | Session expired and returned `SESSION_CLOSED`; no hung request (upstream closure occurred instead of a bridge `TIMEOUT` code) |
+
+Native tests: 24 passed. Unity Play Mode: 2 passed after the demo change. The unchanged C# SDK's prior Edit Mode suite remains 12 passed. APK signature, DEX classes, ARM64 libraries, and package version verified. Public device artifacts are stored locally under ignored `Logs`; reproduce signature checks with `node scripts/verify-device-evidence.cjs Logs`.
+
+This validates the Samsung generic-MWA path. Certified Seeker routing, forced activity recreation/rotation, and SDK `SignAndSendTransactionAsync` submission/confirmation remain unverified. The demo has no broadcast action, and no transaction was broadcast during these checks.

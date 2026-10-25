@@ -46,6 +46,7 @@ public sealed class SeekerDemo : MonoBehaviour
         Button(signing, "Sign Message", async () => {
             var result = await SeekerConnectManager.SignMessageAsync("Hello from Unity Seeker Connect!");
             signature.text = "Ed25519 signature (Base64)\n" + result.Base64;
+            SaveEvidence("message", "Hello from Unity Seeker Connect!", result.Base64);
             Log("Message signed by " + result.Address);
         }, true);
         signature = AddLabel(signing, "Signature will appear here after wallet approval.", "address");
@@ -58,7 +59,9 @@ public sealed class SeekerDemo : MonoBehaviour
         });
         transaction = new TextField("Serialized transaction / Base64") { multiline = true }; transaction.AddToClassList("transaction"); tx.Add(transaction);
         Button(tx, "Request transaction signature", async () => {
-            var result = await SeekerConnectManager.SignTransactionAsync(Convert.FromBase64String(transaction.value.Trim()));
+            var original = transaction.value.Trim();
+            var result = await SeekerConnectManager.SignTransactionAsync(Convert.FromBase64String(original));
+            SaveEvidence("transaction", original, Convert.ToBase64String(result));
             transaction.value = Convert.ToBase64String(result); Log("Signed transaction returned. NOT broadcast or confirmed.");
         });
         var activity = Card(page, "ACTIVITY");
@@ -92,6 +95,14 @@ public sealed class SeekerDemo : MonoBehaviour
     {
         logs.text = DateTime.Now.ToString("HH:mm:ss") + "  " + message + "\n\n" + logs.text;
         if (logs.text.Length > 6000) logs.text = logs.text.Substring(0, 6000);
+    }
+    [Serializable] sealed class SigningEvidence { public string address, input, output; }
+    static void SaveEvidence(string operation, string input, string output)
+    {
+        if (!Debug.isDebugBuild) return;
+        // Public test payloads only; never persist authorization tokens or wallet secrets.
+        System.IO.File.WriteAllText(System.IO.Path.Combine(Application.persistentDataPath, operation + "-evidence.json"),
+            JsonUtility.ToJson(new SigningEvidence { address = SeekerConnectManager.Session.Account.address, input = input, output = output }));
     }
     static Label AddLabel(VisualElement parent, string text, string className)
     { var label = new Label(text); label.AddToClassList(className); parent.Add(label); return label; }

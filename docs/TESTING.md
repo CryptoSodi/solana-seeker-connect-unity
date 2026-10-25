@@ -25,7 +25,9 @@ For the current demo on an ordinary Android phone: open Mock MWA Wallet, tap **A
 9. On a non-Seeker phone or without a certified verified endpoint, Connect must fail with `UNSUPPORTED_DEVICE`, even if some generic MWA wallet is installed.
 10. If separately testing `SignAndSendTransactionAsync`, use Devnet and a funded Devnet account, request explicit wallet approval, and confirm the returned signature using RPC. On ambiguous failure, reconcile the transaction first. Do not automatically repeat it.
 
-This project cannot validate any of the above without an actual device and wallet. Local unit tests and APK inspection cover only their stated scope.
+The Samsung/Mock MWA results are recorded in [VALIDATION.md](VALIDATION.md). They cover the generic MWA route, not certified Seeker behavior. Local unit tests and APK inspection cover only their stated scope.
+
+Development APKs save public `message-evidence.json` and `transaction-evidence.json` under the app's external files directory after successful signing. Pull them with adb from `/sdcard/Android/data/com.community.seekerconnect.demo/files/` into `Logs`, then run `node scripts/verify-device-evidence.cjs Logs`. This independently verifies both Ed25519 signatures, unchanged transaction content, and the expected memo-only instruction. These files contain public test data only, are overwritten on each successful operation, and are not produced by non-development builds.
 
 ## Common failures
 

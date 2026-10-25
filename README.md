@@ -8,7 +8,7 @@ The demo now enables **Devnet MWA testing mode**, so Mock MWA Wallet can be used
 
 ## Validation status
 
-See [the validation record](docs/VALIDATION.md) for build results and the exact verification boundary. No Seeker or Android device was connected during development: real wallet approval, signatures, and device lifecycle behavior still require the device checklist below. Do not interpret compilation or unit tests as a completed wallet-device test.
+See [the validation record](docs/VALIDATION.md) for build results and the exact verification boundary. The demo has been tested on a Samsung SM-S918B with Mock MWA Wallet: connection, independently verified message/transaction signatures, rejection, restoration after relaunch, and disconnect. Certified Seeker routing and the remaining lifecycle/submission checklist still require further device testing.
 
 ## Quick start
 
