@@ -1,0 +1,18 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.js",
+    "test": "node --import tsx --test test/*.test.js"
+  },
+  "dependencies": {
+    "@solana-mobile/seeker-connect-web": "0.2.0"
+  },
+  "devDependencies": {
+    "@noble/curves": "2.0.1",
+    "@noble/hashes": "2.0.1",
+    "@playwright/test": "1.56.1",
+    "esbuild": "0.25.12",
+    "tsx": "4.20.6"
+  }
+}

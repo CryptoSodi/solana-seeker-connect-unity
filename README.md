@@ -1,8 +1,10 @@
 # Seeker Connect for Unity
 
-A reusable Unity package and Android demo for Solana Mobile's **official Kotlin Seeker Connect SDK**. Connect a certified wallet, restore authorization, display its actual public key, sign UTF-8 messages, and sign serialized Solana transactions through native wallet approval.
+A reusable Unity package and Android/WebGL demo for Solana Mobile's **official Seeker Connect SDKs**: Kotlin on Android and `@solana-mobile/seeker-connect-web` in WebGL. Connect a wallet, restore authorization, display its public key, and request message or transaction signatures through wallet approval.
 
-**This is an independently developed community wrapper, not an official Solana Mobile Unity SDK.** There are no simulated wallet responses. Editor Play mode previews the UI and explicitly reports that Android wallet operations are unavailable.
+**This is an independently developed community wrapper, not an official Solana Mobile Unity SDK.** Production wallet operations use the official SDKs. Editor Play mode previews the UI; automated web tests use an isolated wallet fixture.
+
+**WebGL:** see [web setup and testing](docs/WEB.md). The same C# API calls the official web SDK. Supply a Nostr relay hostname; real wallet testing requires a compatible wallet.
 
 The demo now enables **Devnet MWA testing mode**, so Mock MWA Wallet can be used on ordinary Android phones. The reusable SDK still defaults to certified Seeker wallets only. Testing mode uses the official SDK's generic MWA fallback, not fabricated responses.
 

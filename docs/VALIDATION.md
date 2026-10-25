@@ -95,3 +95,18 @@ Device testing found that Mock MWA Wallet returns a detached signature for `sign
 Native tests: 24 passed. Unity Play Mode: 2 passed after the demo change. The unchanged C# SDK's prior Edit Mode suite remains 12 passed. APK signature, DEX classes, ARM64 libraries, and package version verified. Public device artifacts are stored locally under ignored `Logs`; reproduce signature checks with `node scripts/verify-device-evidence.cjs Logs`.
 
 This validates the Samsung generic-MWA path. Certified Seeker routing, forced activity recreation/rotation, and SDK `SignAndSendTransactionAsync` submission/confirmation remain unverified. The demo has no broadcast action, and no transaction was broadcast during these checks.
+# WebGL validation — 2026-10-25
+
+- Official web SDK 0.2.0 bundled with locked npm dependencies and license notices.
+- Unity 6000.6.0f1 WebGL development build succeeded.
+- Chromium loaded the real Unity player with no reported JavaScript errors.
+  Clicking Restore Session exercised C# → jslib → web bridge → Unity callbacks
+  for initialization, Unknown availability, and empty-session restore.
+- Six Node test cases passed: real official SDK client against a simulated Nostr
+  relay/wallet, independently verified Ed25519 message/transaction signatures,
+  restore after reload, disconnect, rejection, timeout, cancellation, concurrency,
+  capability gating, changed accounts and mutated transaction rejection.
+- Unity regression checks: 12 EditMode and 2 PlayMode tests passed.
+- No physical Seeker web approval, public relay exchange, or on-chain submission
+  was tested. The Samsung APK is unchanged. Solana Mobile relay terms must be
+  accepted before real relay use. See [web setup](WEB.md).

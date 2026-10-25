@@ -23,3 +23,5 @@ local.properties
 *.aar
 test-results*.xml
 .DS_Store
+node_modules/
+web/test-results/

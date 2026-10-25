@@ -3,7 +3,7 @@ using System;
 namespace Community.SeekerConnect
 {
     public enum WalletConnectionState { Uninitialized, Disconnected, Connecting, Connected, Unsupported }
-    public enum WalletAvailability { None, Other, Certified }
+    public enum WalletAvailability { None, Other, Certified, Unknown }
 
     [Serializable]
     public sealed class SeekerConnectConfig
@@ -13,6 +13,8 @@ namespace Community.SeekerConnect
         public string iconPath = "icon.png";
         public string chain = "solana:devnet";
         public int timeoutMs = 120000;
+        // WebGL only: Nostr relay hostname (optionally :port), without wss://.
+        public string relayDomain = "";
         // Explicit opt-in for development with Mock MWA Wallet on ordinary Android devices.
         public bool allowMwaTesting = false;
 
@@ -28,6 +30,10 @@ namespace Community.SeekerConnect
             if (timeoutMs < 10000 || timeoutMs > 120000) throw new ArgumentOutOfRangeException(nameof(timeoutMs));
             if (allowMwaTesting && chain != "solana:devnet")
                 throw new ArgumentException("MWA testing mode is restricted to Devnet.");
+#if UNITY_WEBGL && !UNITY_EDITOR
+            if (string.IsNullOrWhiteSpace(relayDomain) || !System.Text.RegularExpressions.Regex.IsMatch(relayDomain, @"^[a-zA-Z0-9.-]+(?::\d{1,5})?$"))
+                throw new ArgumentException("WebGL requires a Nostr relay hostname, without wss:// or a path.");
+#endif
         }
     }
 

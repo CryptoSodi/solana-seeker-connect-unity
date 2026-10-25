@@ -1,5 +1,19 @@
 # Architecture and reliability
 
+## WebGL transport
+
+WebGL uses the same C# facade and request router, with `.jslib` externs calling
+the bundled official `@solana-mobile/seeker-connect-web@0.2.0`. Each interaction
+runs through `createNostrSeekerLink().transact`. The bridge adds origin-local
+authorization storage, public account snapshots, cancellation and a JavaScript
+deadline (rather than relying on threaded `Task.Delay` in WebGL). It checks signed
+message prefixes and that signed transactions retain the original message bytes;
+it does not duplicate Android's full transaction parser. Wallet approval remains
+required. Browser availability is `Unknown`. See [web setup](WEB.md) for relay
+configuration, storage limitations, and the automated test boundary.
+
+The following native lifecycle and SharedPreferences details apply to Android.
+
 ## Request lifecycle
 
 The static C# facade captures Unity's main thread at runtime initialization. A persistent GameObject receives `UnitySendMessage`. Each call registers a GUID in `RequestRouter`, invokes the native static Java API, and awaits a `TaskCompletionSource` with asynchronous continuations. Unity callbacks update state on the Unity main thread before completing the task. Unknown, duplicate, or late IDs cannot settle another request. Subscriber exceptions cannot prevent request completion.
@@ -34,4 +48,7 @@ Sign-and-send returns the wallet's 64-byte submission signature only. RPC confir
 
 The demo opts into `allowMwaTesting`, using the official SDK's generic MWA fallback on Devnet. Missing wallets are never accepted. The SDK configuration remains certified-only by default; its production cache is separate from the testing cache. This mode exercises real Android wallet communication but does not certify a Seeker device flow.
 
-The C# API accepts standard serialized Solana bytes and the Kotlin bridge is the sole provider-specific boundary. A future `IWalletProvider` adapter can expose the same account/signing models for generic MWA or Jupiter. Do not change the current certified-wallet gate silently. PSG1 support requires separate device/provider research and testing; this implementation makes no compatibility claim.
+The C# API accepts standard serialized Solana bytes. Kotlin and JavaScript bridges
+select the official platform SDKs at compile time. A future `IWalletProvider`
+adapter could expose the same account/signing models for other providers. PSG1
+support requires separate research and testing; this implementation makes no claim.

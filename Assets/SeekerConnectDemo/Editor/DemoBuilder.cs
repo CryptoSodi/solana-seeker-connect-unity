@@ -50,6 +50,14 @@ public static class DemoBuilder
         var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions { scenes = new[] { ScenePath }, locationPathName = "Builds/SeekerConnectDemo.apk", target = BuildTarget.Android, options = BuildOptions.Development });
         if (report.summary.result != BuildResult.Succeeded) throw new BuildFailedException("Android APK failed: " + report.summary.result);
     }
+    [MenuItem("Seeker Connect/Build WebGL")]
+    public static void BuildWebGL()
+    {
+        Configure();
+        PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Disabled;
+        var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions { scenes = new[] { ScenePath }, locationPathName = "Builds/WebGL", target = BuildTarget.WebGL, options = BuildOptions.Development });
+        if (report.summary.result != BuildResult.Succeeded) throw new BuildFailedException("WebGL build failed: " + report.summary.result);
+    }
     [MenuItem("Seeker Connect/Export Android Gradle Project")]
     public static void Export()
     {

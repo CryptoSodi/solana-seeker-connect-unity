@@ -19,7 +19,13 @@ public sealed class DemoTests
         Assert.NotNull(document.panelSettings, "A missing panel makes the otherwise buildable APK blank.");
         Assert.NotNull(document.rootVisualElement.panel);
         var labels = document.rootVisualElement.Query<Button>().ToList().Select(button => button.text).ToArray();
-        CollectionAssert.IsSubsetOf(new[] { "Connect with MWA test wallet", "Restore Session", "Copy wallet address", "Disconnect", "Sign Message", "Build Devnet memo", "Request transaction signature" }, labels);
+        CollectionAssert.IsSubsetOf(new[] {
+#if UNITY_WEBGL
+            "Connect with Seeker Connect",
+#else
+            "Connect with MWA test wallet",
+#endif
+            "Restore Session", "Copy wallet address", "Disconnect", "Sign Message", "Build Devnet memo", "Request transaction signature" }, labels);
     }
 
     [UnityTest]

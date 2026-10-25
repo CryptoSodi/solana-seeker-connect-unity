@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Community.SeekerConnect
 {
-    /// <summary>Call from Unity's main thread. Android only; no simulated wallet responses.</summary>
+    /// <summary>Call from Unity's main thread. Official Android and WebGL SDK transports.</summary>
     public static class SeekerConnectManager
     {
         internal static RequestRouter Router = new RequestRouter();
@@ -15,6 +15,12 @@ namespace Community.SeekerConnect
         static SeekerCallback receiver;
         static bool initialized;
         static int timeoutMs = 120000;
+#if UNITY_WEBGL && !UNITY_EDITOR
+        [System.Runtime.InteropServices.DllImport("__Internal")]
+        static extern void SeekerWebRequest(string receiver, string id, string operation, string json);
+        [System.Runtime.InteropServices.DllImport("__Internal")]
+        static extern void SeekerWebCancel(string id);
+#endif
         public static WalletSession Session { get; private set; }
         public static WalletConnectionState State { get; private set; } = WalletConnectionState.Uninitialized;
         public static event Action<WalletConnectionState> ConnectionStateChanged;
@@ -58,7 +64,7 @@ namespace Community.SeekerConnect
         public static async Task<WalletAvailability> GetWalletAvailabilityAsync()
         {
             Ready(); var reply = await Send("availability", "{}");
-            return reply.availability == "CERTIFIED" ? WalletAvailability.Certified : reply.availability == "OTHER" ? WalletAvailability.Other : WalletAvailability.None;
+            return reply.availability == "CERTIFIED" ? WalletAvailability.Certified : reply.availability == "OTHER" ? WalletAvailability.Other : reply.availability == "UNKNOWN" ? WalletAvailability.Unknown : WalletAvailability.None;
         }
         public static async Task<WalletSignature> SignMessageAsync(string message, CancellationToken cancellationToken = default)
         {
@@ -104,9 +110,9 @@ namespace Community.SeekerConnect
         }
         static void EnsurePlatform()
         {
-#if !UNITY_ANDROID || UNITY_EDITOR
+#if (!UNITY_ANDROID && !UNITY_WEBGL) || UNITY_EDITOR
             SetState(WalletConnectionState.Unsupported);
-            throw new SeekerConnectException("UNSUPPORTED_PLATFORM", "Real Seeker wallet operations require an Android build on a compatible device. Editor simulation is disabled.");
+            throw new SeekerConnectException("UNSUPPORTED_PLATFORM", "Wallet operations require an Android or WebGL build and a compatible wallet. Editor simulation is disabled.");
 #endif
         }
         static void Ready(bool requireSession = false)
@@ -130,10 +136,14 @@ namespace Community.SeekerConnect
                 using var activity = player.GetStatic<AndroidJavaObject>("currentActivity");
                 using var bridge = new AndroidJavaClass("com.community.seekerconnect.SeekerBridge");
                 bridge.CallStatic("request", activity, receiver.gameObject.name, id, operation, json);
+#elif UNITY_WEBGL && !UNITY_EDITOR
+                SeekerWebRequest(receiver.gameObject.name, id, operation, json);
 #endif
+#if !UNITY_WEBGL || UNITY_EDITOR
                 _ = Watchdog(id, watchdog.Token);
+#endif
             } catch (Exception) {
-                Router.Complete(new NativeReply { id = id, code = "BRIDGE_UNAVAILABLE", message = "Native bridge failed to load. Check Android build integration." });
+                Router.Complete(new NativeReply { id = id, code = "BRIDGE_UNAVAILABLE", message = "Platform bridge failed to load. Check build integration." });
             }
             try { return await task; }
             finally { watchdog.Cancel(); }
@@ -152,6 +162,8 @@ namespace Community.SeekerConnect
 #if UNITY_ANDROID && !UNITY_EDITOR
             try { using var bridge = new AndroidJavaClass("com.community.seekerconnect.SeekerBridge"); bridge.CallStatic("cancel", id); }
             catch (Exception) { /* The watchdog remains responsible for completion. */ }
+#elif UNITY_WEBGL && !UNITY_EDITOR
+            SeekerWebCancel(id);
 #endif
         }
         internal static void Receive(string json)
