@@ -13,7 +13,6 @@ import kotlinx.coroutines.*
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.URI
-import java.security.MessageDigest
 
 /** All mutable state is confined to Android's main looper. No tokens cross JNI. */
 object SeekerBridge {
@@ -22,6 +21,7 @@ object SeekerBridge {
     private var active: Request? = null
     private var timeoutMs = 120_000L
     private var allowMwaTesting = false
+    private var allowGenericMwa = false
     internal class Request(val id: String, val receiver: String, val operation: String, val data: JSONObject) {
         var job: Job? = null
         var host: WalletHostActivity? = null
@@ -73,17 +73,17 @@ object SeekerBridge {
         val chain = data.getString("chain")
         require(chain in listOf("solana:devnet", "solana:testnet", "solana:mainnet"))
         val testing = data.optBoolean("allowMwaTesting", false)
+        val generic = data.optBoolean("allowGenericMwa", false)
         require(!testing || chain == "solana:devnet") { "MWA testing mode is restricted to Devnet" }
         timeoutMs = data.optLong("timeoutMs", 120_000).also { require(it in 10_000..120_000) }
-        // Never restore a generic testing authorization in the default certified-only mode.
-        val cacheIdentity = if (testing) "$identity|$chain|mwa-testing" else "$identity|$chain"
-        val namespace = MessageDigest.getInstance("SHA-256").digest(cacheIdentity.toByteArray()).joinToString("") { "%02x".format(it) }
+        val cacheName = WalletPolicy.cacheName(identity, chain, testing, generic)
         client = SeekerConnect(
             SeekerConnectConfig(DappIdentity(name, identity, icon), chain, associationTimeoutMs = minOf(30_000, timeoutMs)),
             MwaSeekerLink(activity.applicationContext),
-            SharedPreferencesAuthorizationCache(activity.applicationContext, "SeekerConnect-$namespace")
+            SharedPreferencesAuthorizationCache(activity.applicationContext, cacheName)
         )
         allowMwaTesting = testing
+        allowGenericMwa = generic
     }
 
     internal fun attach(host: WalletHostActivity, recreated: Boolean): Request? {
@@ -105,10 +105,10 @@ object SeekerBridge {
                 val result = JSONObject()
                 if (request.operation != "disconnect") {
                     val availability = sdk.walletAvailability()
-                    if (!WalletPolicy.accepts(availability, allowMwaTesting)) {
-                        if (allowMwaTesting && availability == WalletAvailability.NONE)
-                            throw BridgeError("NO_WALLET_FOUND", "No MWA wallet is installed. Install and authenticate Mock MWA Wallet first.")
-                        throw BridgeError("UNSUPPORTED_DEVICE", "No certified Seeker wallet is available. Enable Devnet MWA testing mode to use Mock MWA Wallet.")
+                    if (!WalletPolicy.accepts(availability, allowMwaTesting, allowGenericMwa)) {
+                        if ((allowMwaTesting || allowGenericMwa) && availability == WalletAvailability.NONE)
+                            throw BridgeError("NO_WALLET_FOUND", "No compatible MWA wallet is installed.")
+                        throw BridgeError("UNSUPPORTED_DEVICE", "No certified Seeker wallet is available. Enable allowGenericMwa for compatible Android wallets, or allowMwaTesting for Devnet mock testing.")
                     }
                 }
                 when (request.operation) {

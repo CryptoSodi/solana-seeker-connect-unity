@@ -110,3 +110,12 @@ This validates the Samsung generic-MWA path. Certified Seeker routing, forced ac
 - No physical Seeker web approval, public relay exchange, or on-chain submission
   was tested. The Samsung APK is unchanged. Solana Mobile relay terms must be
   accepted before real relay use. See [web setup](WEB.md).
+
+## Production generic Android MWA policy — 0.2.1 (2026-10-27)
+
+- Added `allowGenericMwa` in C# and Kotlin, default false, for compatible production Android MWA wallets on all supported chains. Upstream certified-first routing remains unchanged.
+- Mock compatibility still requires `allowMwaTesting` and Devnet, including when both flags are true. Production signature/payload validation is unchanged.
+- Certified-only and mock caches retain their existing names. Production generic MWA has a separate identity/chain-scoped cache.
+- **29 native tests passed** (`:seekerBridge:testDebugUnitTest`), including native config validation, policy/cache isolation, and a Robolectric integration test using the official SDK/cache: a seeded production Mainnet authorization restores across client recreation with simulated generic-wallet availability, disconnect clears it, and a subsequent restore is empty. This test does not contact a real wallet.
+- **16 Unity EditMode tests passed**, including supported production chains, JSON serialization of the new flag, and rejection of Mainnet mock mode even with production opt-in enabled.
+- Existing strict signature and transaction tests passed unchanged. No APK/WebGL player build or deployment was performed. No physical Jupiter connect/sign/restore test or on-chain submission was performed; see the [device follow-up checklist](ANDROID_WALLETS.md).

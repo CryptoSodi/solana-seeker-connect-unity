@@ -61,7 +61,7 @@ This route keeps the entire dependency graph and manifest merging visible. Unity
 
 Own and operate an HTTPS website. Upload a suitable square app icon, for example `images/icon.png`, and verify it can be fetched publicly over HTTPS. Set `identityUri` to the app website and `iconPath` to that relative icon path. Do not use a custom scheme, credentials in the URI, another company's identity, or a placeholder in a shipped app. The demo lets you enter this at runtime; a game should supply its deployment configuration in code.
 
-Authorization caches are namespaced by a SHA-256 of identity URI and chain. Changing either does not reuse the previous authorization. Initialize once per app process and use Disconnect to clear that configuration's cache.
+Authorization caches are namespaced by a SHA-256 of identity URI, chain, and Android wallet policy. Certified-only and mock-testing namespaces remain compatible with previous versions; production generic MWA uses a separate namespace. Changing identity, chain, or policy does not reuse the previous authorization. Initialize once per app process and use Disconnect to clear that configuration's cache. See [Android wallet policy](ANDROID_WALLETS.md).
 
 ## Installing only the package
 

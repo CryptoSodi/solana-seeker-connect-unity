@@ -1,6 +1,10 @@
 package com.community.seekerconnect
 
 import android.app.Activity
+import android.content.Intent
+import android.content.pm.ActivityInfo
+import android.content.pm.ResolveInfo
+import android.net.Uri
 import android.os.Looper
 import com.unity3d.player.UnityPlayer
 import org.json.JSONObject
@@ -13,6 +17,9 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.LooperMode
+import com.solanamobile.seekerconnect.*
+import com.solanamobile.seekerconnect.android.SharedPreferencesAuthorizationCache
+import kotlinx.coroutines.runBlocking
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
@@ -41,6 +48,43 @@ class BridgeLifecycleTest {
     @Test fun testingModeRejectsMainnetAtNativeBoundary() {
         val result = invoke("mainnet", "initialize", """{"identityUri":"https://example.org","appName":"Test","iconPath":"icon.png","chain":"solana:mainnet","allowMwaTesting":true}""")
         assertEquals("INVALID_INPUT", result.getString("code"))
+    }
+    @Test fun productionGenericMwaAcceptsMainnetAtNativeBoundary() {
+        val result = invoke("generic", "initialize", """{"identityUri":"https://example.org","appName":"Test","iconPath":"icon.png","chain":"solana:mainnet","allowGenericMwa":true}""")
+        assertTrue(result.getBoolean("ok"))
+    }
+    @Test fun productionOptInDoesNotBypassMockMainnetRestriction() {
+        val result = invoke("both", "initialize", """{"identityUri":"https://example.org","appName":"Test","iconPath":"icon.png","chain":"solana:mainnet","allowGenericMwa":true,"allowMwaTesting":true}""")
+        assertEquals("INVALID_INPUT", result.getString("code"))
+    }
+    @Test fun productionGenericRestoreSurvivesClientRecreationAndDisconnectClearsCache() = runBlocking {
+        val info = ResolveInfo().apply { activityInfo = ActivityInfo().apply { packageName = "example.mwa.wallet"; name = "WalletActivity" } }
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("solana-wallet:/v1/associate/local")).addCategory(Intent.CATEGORY_BROWSABLE)
+        shadowOf(activity.packageManager).addResolveInfoForIntent(intent, info)
+        val cache = SharedPreferencesAuthorizationCache(activity, WalletPolicy.cacheName("https://example.org", "solana:mainnet", false, true))
+        cache.set(StoredAuthorization(listOf(SeekerAccount("public-address", ByteArray(32))), "test-token", "https://wallet.example.org", "solana:mainnet", SeekerWalletCapabilities()))
+        val config = """{"identityUri":"https://example.org","appName":"Test","iconPath":"icon.png","chain":"solana:mainnet","allowGenericMwa":true}"""
+        suspend fun execute(operation: String): JSONObject {
+            SeekerBridge.request(activity, "Receiver", operation, operation, "{}")
+            shadowOf(Looper.getMainLooper()).idle()
+            val host = Robolectric.buildActivity(WalletHostActivity::class.java).get()
+            SeekerBridge.execute(checkNotNull(SeekerBridge.attach(host, false)), host)
+            return JSONObject(UnityPlayer.messages.last())
+        }
+        repeat(2) {
+            assertTrue(invoke("init", "initialize", config).getBoolean("ok"))
+            assertEquals("OTHER", invoke("availability", "availability").getString("availability"))
+            val restored = execute("restore")
+            assertTrue(restored.toString(), restored.getBoolean("ok"))
+            assertEquals("public-address", restored.getJSONObject("session").getJSONArray("accounts").getJSONObject(0).getString("address"))
+            assertFalse(restored.toString().contains("test-token"))
+        }
+        assertNull(SharedPreferencesAuthorizationCache(activity, WalletPolicy.cacheName("https://example.org", "solana:mainnet", false, false)).get())
+        assertNull(SharedPreferencesAuthorizationCache(activity, WalletPolicy.cacheName("https://example.org", "solana:devnet", true, false)).get())
+        assertTrue(execute("disconnect").getBoolean("ok"))
+        assertNull(cache.get())
+        invoke("init", "initialize", config)
+        assertTrue(execute("restore").isNull("session"))
     }
     @Test fun unavailableWalletNeverReportsCertified() {
         initialize()

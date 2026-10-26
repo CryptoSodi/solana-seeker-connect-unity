@@ -8,6 +8,8 @@ A reusable Unity package and Android/WebGL demo for Solana Mobile's **official S
 
 The demo now enables **Devnet MWA testing mode**, so Mock MWA Wallet can be used on ordinary Android phones. The reusable SDK still defaults to certified Seeker wallets only. Testing mode uses the official SDK's generic MWA fallback, not fabricated responses.
 
+**Android production wallets (0.2.1):** set `allowGenericMwa = true` and leave `allowMwaTesting = false` to permit compatible MWA wallets on ordinary Android phones, including Mainnet. Strict production payload validation remains enabled. The official SDK prefers the certified endpoint on first connection and falls back to the Android wallet chooser; subsequent interactions prefer the learned wallet endpoint. Jupiter device compatibility is pending validation. See [Android wallet policy and restoration](docs/ANDROID_WALLETS.md).
+
 ## Validation status
 
 See [the validation record](docs/VALIDATION.md) for build results and the exact verification boundary. The demo has been tested on a Samsung SM-S918B with Mock MWA Wallet: connection, independently verified message/transaction signatures, rejection, restoration after relaunch, and disconnect. Certified Seeker routing and the remaining lifecycle/submission checklist still require further device testing.

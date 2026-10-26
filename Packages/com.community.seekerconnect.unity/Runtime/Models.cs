@@ -15,6 +15,8 @@ namespace Community.SeekerConnect
         public int timeoutMs = 120000;
         // WebGL only: Nostr relay hostname (optionally :port), without wss://.
         public string relayDomain = "";
+        // Android only: allow compatible production MWA wallets; strict payload validation remains enabled.
+        public bool allowGenericMwa = false;
         // Explicit opt-in for development with Mock MWA Wallet on ordinary Android devices.
         public bool allowMwaTesting = false;
 

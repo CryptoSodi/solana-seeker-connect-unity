@@ -20,7 +20,14 @@ Call every entry point on Unity's main thread after runtime initialization. The 
 
 `SeekerConnectConfig` has `appName`, `identityUri` (absolute HTTPS), `iconPath` (relative URI), `chain` (`solana:devnet` by default), and `timeoutMs` (10000–120000). Do not mutate configuration expecting a running SDK to change. Initialize once.
 
-`allowMwaTesting` defaults to `false`. Explicitly set it to `true` to allow generic MWA wallets such as Mock MWA Wallet on ordinary Android devices. This option requires Devnet and is validated on both sides of JNI. Testing-mode authorizations are isolated from the certified-only cache. The demo enables this option and labels its UI accordingly.
+Android wallet policy options both default to `false`:
+
+- `allowGenericMwa = true`: production opt-in for compatible generic MWA wallets on Devnet, Testnet or Mainnet. Does not relax message or transaction validation. Certified first-connect routing remains preferred; the official SDK falls back to the Android MWA chooser.
+- `allowMwaTesting = true`: Devnet-only mock compatibility, including detached message signature responses. The chain restriction is validated on both sides of JNI, even when `allowGenericMwa` is also true. The demo enables this option.
+
+Certified-only, production generic-MWA, and mock-testing authorizations have separate caches, additionally scoped by identity and chain. Existing certified-only and mock cache names remain unchanged. If both flags are true, mock mode and its cache apply. Changing policy requires a new connection in its cache; no tokens are migrated. These flags do not change WebGL transport.
+
+Call `RestoreSessionAsync()` after initialization on app startup. It restores cached authorization without wallet approval; the next signing interaction reauthorizes with the wallet. Restore is not backend authentication, and revoked/expired wallet grants may fail on the next operation. Disconnect clears only the current configuration's local cache.
 
 `WalletSession` contains `chain`, `accounts`, `Account` (first authorized account), and `supportsSignAndSend`. `WalletAccount` has `address`, `publicKeyBase64`, `PublicKey`, and optional `label`. Treat snapshot fields/arrays as read-only. The wrapper signs with the first authorized account.
 
@@ -35,7 +42,7 @@ Catch `SeekerConnectException` and inspect `Code`. Invalid managed inputs may th
 | Code | Meaning / action |
 | --- | --- |
 | `UNSUPPORTED_PLATFORM` | Editor/non-Android: use a real Android build |
-| `UNSUPPORTED_DEVICE` | No certified Seeker endpoint; generic MWA fallback deliberately disabled |
+| `UNSUPPORTED_DEVICE` | No certified Seeker endpoint and neither Android fallback opt-in is enabled |
 | `NO_WALLET_FOUND` | Official SDK cannot resolve wallet; check installation/App Links |
 | `NOT_INITIALIZED`, `NOT_CONNECTED` | Initialize, then connect/restore |
 | `BUSY` | Await/cancel existing request before another operation |

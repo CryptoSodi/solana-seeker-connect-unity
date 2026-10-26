@@ -8,7 +8,17 @@ namespace Community.SeekerConnect.Tests
     public sealed class BridgeTests
     {
         [Test] public void GenericMwaRequiresExplicitOptIn()
-        { Assert.False(new SeekerConnectConfig().allowMwaTesting); }
+        { Assert.False(new SeekerConnectConfig().allowMwaTesting); Assert.False(new SeekerConnectConfig().allowGenericMwa); }
+        [TestCase("solana:mainnet")][TestCase("solana:testnet")][TestCase("solana:devnet")]
+        public void ProductionGenericMwaAcceptsSupportedChains(string chain)
+        {
+            var config = new SeekerConnectConfig { identityUri = "https://example.org", chain = chain, allowGenericMwa = true };
+            config.Validate();
+            StringAssert.Contains("\"allowGenericMwa\":true", JsonUtility.ToJson(config));
+            Assert.False(config.allowMwaTesting);
+        }
+        [Test] public void GenericOptInCannotBypassMockChainRestriction()
+        { Assert.Throws<ArgumentException>(() => new SeekerConnectConfig { identityUri = "https://example.org", allowGenericMwa = true, allowMwaTesting = true, chain = "solana:mainnet" }.Validate()); }
         [Test] public void MwaTestingRejectsMainnet()
         { Assert.Throws<ArgumentException>(() => new SeekerConnectConfig { identityUri = "https://example.org", allowMwaTesting = true, chain = "solana:mainnet" }.Validate()); }
         [Test] public void MwaTestingAcceptsDevnet()
