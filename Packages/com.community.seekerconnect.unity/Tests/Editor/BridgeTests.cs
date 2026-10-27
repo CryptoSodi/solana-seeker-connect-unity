@@ -61,5 +61,21 @@ namespace Community.SeekerConnect.Tests
             Assert.True(reply.hasSession); Assert.AreEqual("public-address", reply.session.Account.address);
             CollectionAssert.AreEqual(new byte[] {1,2,3}, reply.session.Account.PublicKey);
         }
+        [TestCase("INVALID_RESPONSE")][TestCase("ACCOUNT_CHANGED")]
+        public async Task FailedMessageVerificationClearsManagedSessionBeforeCallerHandlesError(string code)
+        {
+            try {
+                var connected = SeekerConnectManager.Router.Add("connected");
+                SeekerConnectManager.Receive("{\"id\":\"connected\",\"ok\":true,\"hasSession\":true,\"session\":{\"accounts\":[{\"address\":\"public-address\"}]}}");
+                await connected;
+                Assert.NotNull(SeekerConnectManager.Session);
+                var signing = SeekerConnectManager.Router.Add("signing");
+                SeekerConnectManager.Receive("{\"id\":\"signing\",\"ok\":false,\"hasSession\":true,\"session\":null,\"code\":\"" + code + "\"}");
+                var error = Assert.ThrowsAsync<SeekerConnectException>(async () => await signing);
+                Assert.AreEqual(code, error.Code);
+                Assert.IsNull(SeekerConnectManager.Session);
+                Assert.AreEqual(WalletConnectionState.Disconnected, SeekerConnectManager.State);
+            } finally { SeekerConnectManager.Closed(); }
+        }
     }
 }

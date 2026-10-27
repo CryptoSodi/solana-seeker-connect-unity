@@ -1,14 +1,21 @@
 package com.community.seekerconnect
 
+import org.bouncycastle.math.ec.rfc8032.Ed25519
+
 /** Wire validation is independent of Android and is exercised by unit tests. */
 internal object Wire {
-    fun signature(message: ByteArray, signed: ByteArray, allowDetachedTesting: Boolean = false): ByteArray {
-        // Mock MWA Wallet returns a detached signature instead of the MWA signed payload.
-        // Keep this compatibility exception confined to explicit development mode.
-        if (allowDetachedTesting && signed.size == 64) return signed.copyOf()
-        require(signed.size == message.size + 64) { "Expected one Ed25519 signature appended to the message" }
-        require(signed.copyOfRange(0, message.size).contentEquals(message)) { "Wallet changed the signed message" }
-        return signed.copyOfRange(message.size, signed.size)
+    fun signature(message: ByteArray, signed: ByteArray, publicKey: ByteArray): ByteArray {
+        require(message.isNotEmpty() && publicKey.size == 32) { "Invalid message or account key" }
+        // Seeker Connect returns raw MWA signedPayloads. Some wallets omit the message;
+        // support that encoding only after verifying the exact original message and key.
+        val signature = if (signed.size == 64) signed.copyOf() else {
+            require(signed.size == message.size + 64) { "Expected one Ed25519 signature" }
+            require(signed.copyOfRange(0, message.size).contentEquals(message)) { "Wallet changed the signed message" }
+            signed.copyOfRange(message.size, signed.size)
+        }
+        require(Ed25519.validatePublicKeyFull(publicKey, 0) &&
+            Ed25519.verify(signature, 0, publicKey, 0, message, 0, message.size)) { "Invalid message signature" }
+        return signature
     }
 
     fun transaction(bytes: ByteArray) {

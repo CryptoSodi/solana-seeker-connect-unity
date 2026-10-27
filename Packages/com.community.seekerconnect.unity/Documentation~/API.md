@@ -23,7 +23,7 @@ Call every entry point on Unity's main thread after runtime initialization. The 
 Android wallet policy options both default to `false`:
 
 - `allowGenericMwa = true`: production opt-in for compatible generic MWA wallets on Devnet, Testnet or Mainnet. Does not relax message or transaction validation. Certified first-connect routing remains preferred; the official SDK falls back to the Android MWA chooser.
-- `allowMwaTesting = true`: Devnet-only mock compatibility, including detached message signature responses. The chain restriction is validated on both sides of JNI, even when `allowGenericMwa` is also true. The demo enables this option.
+- `allowMwaTesting = true`: Devnet-only mock testing policy with a separate cache. The chain restriction is validated on both sides of JNI, even when `allowGenericMwa` is also true. The demo enables this option. Since 0.2.2 it does not change signature verification rules.
 
 Certified-only, production generic-MWA, and mock-testing authorizations have separate caches, additionally scoped by identity and chain. Existing certified-only and mock cache names remain unchanged. If both flags are true, mock mode and its cache apply. Changing policy requires a new connection in its cache; no tokens are migrated. These flags do not change WebGL transport.
 
@@ -33,7 +33,7 @@ Call `RestoreSessionAsync()` after initialization on app startup. It restores ca
 
 `WalletSignature` exposes `Address`, `Signature`, `Base64`, and `SignedPayload`. `SignedPayload` is populated for messages, not sign-and-send. It does not represent network confirmation.
 
-Devnet testing mode accepts Mock MWA Wallet's detached 64-byte message response and normalizes `SignedPayload` to the requested message followed by that signature. Default strict mode requires the standard full payload. Applications should independently verify signatures against the account public key.
+Since 0.2.2, Android accepts full or detached 64-byte message-signature responses in every mode, verifies Ed25519 against the requested message and account key, and normalizes `SignedPayload` to message followed by signature. Reauthorization must retain the same first account before signing. Invalid signatures return `INVALID_RESPONSE`; changed accounts return `ACCOUNT_CHANGED`. Both clear local authorization and return a null session; reconnect explicitly and obtain a fresh server challenge. No signing is automatically retried. Server-side verification remains necessary for login. To switch wallets intentionally, call Disconnect before Connect; Connect alone can reuse the cached authorization.
 
 ## Errors
 
@@ -47,6 +47,7 @@ Catch `SeekerConnectException` and inspect `Code`. Invalid managed inputs may th
 | `NOT_INITIALIZED`, `NOT_CONNECTED` | Initialize, then connect/restore |
 | `BUSY` | Await/cancel existing request before another operation |
 | `INVALID_INPUT`, `INVALID_RESPONSE` | Check input, encoding, or unexpected wallet response shape |
+| `ACCOUNT_CHANGED` | Android reauthorization changed the account; cache cleared, no message signed; reconnect and obtain a fresh challenge |
 | `AUTHORIZATION_DECLINED`, `REQUEST_DECLINED` | Wallet/user declined; do not automatically retry |
 | `ASSOCIATION_FAILED` | SDK association timeout/failure; check wallet App Links |
 | `TIMEOUT`, `SESSION_CLOSED` | Outcome may be ambiguous for submission; reconcile with RPC |

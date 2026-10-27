@@ -21,9 +21,9 @@ var restored = await SeekerConnectManager.RestoreSessionAsync();
 | --- | --- | --- | --- | --- |
 | false | false | Certified | Any supported chain | Strict / existing certified-only cache |
 | true | false | Certified or compatible MWA | Any supported chain | Strict / separate production MWA cache |
-| either | true | Certified or compatible MWA | Devnet only | Mock detached-signature compatibility / existing testing cache |
+| either | true | Certified or compatible MWA | Devnet only | Verified signatures / existing testing cache |
 
-The production flag only changes availability policy and cache scope. `Wire.signature` continues requiring the original message followed by a 64-byte signature; transaction structural checks remain unchanged. Only `allowMwaTesting` permits a detached-only message response. Both flags true still reject Mainnet/Testnet in C# and Kotlin. The flags do not change WebGL transport or enable unsupported platforms.
+The production flag only changes availability policy and cache scope. Since 0.2.2, `Wire.signature` accepts the original message followed by a 64-byte signature or a detached 64-byte response, and verifies Ed25519 against the exact requested message and account key in every Android mode. Full payloads must preserve the exact message prefix. Transaction structural checks remain unchanged. Both flags true still reject Mainnet/Testnet in C# and Kotlin. The flags do not change WebGL transport or enable unsupported platforms.
 
 The official SDK resolves a previously learned wallet URI first, then the default certified first-connect URI, then generic MWA. On first connection, certified routing remains preferred. A generic chooser may appear when multiple wallets are installed. The wrapper does not change upstream wallet selection.
 
@@ -42,6 +42,8 @@ Upstream routing and configuration sources:
 Call initialization once, then restore on launch using the same identity, chain and policy. Cached authorization survives process death. Restore does not ask the wallet to approve or prove that its grant is still valid; signing opens a new interaction and reauthorizes. Handle revoked grants by offering an explicit reconnect. Do not automatically retry signing/submission.
 
 Each policy has a separate cache. Switching from certified-only or mock testing to production generic MWA requires connecting once in the new mode. Existing caches are preserved and not migrated. Disconnect clears only the active cache and does not revoke the wallet-side grant.
+
+For an intentional wallet-app switch, call Disconnect before Connect so the old token and learned endpoint are not reused. Since 0.2.2, malformed/invalid message signatures (`INVALID_RESPONSE`) and account changes during reauthorization (`ACCOUNT_CHANGED`) clear local authorization automatically and stop the operation. The next explicit Connect starts without that cached token or endpoint; fetch a fresh server challenge afterwards. The bridge does not retry signing. The official SDK also clears cached authorization when token reauthorization returns `AUTHORIZATION_DECLINED`, but ordinary request rejection and transport failure do not establish that a token is invalid.
 
 Preserve server challenge verification for login: a cached address is not backend authentication. Preserve server transaction validation and confirmation for checkout. Adding this Android provider does not require replacing Phantom WebGL or a separate PSG1/Jupiter provider.
 

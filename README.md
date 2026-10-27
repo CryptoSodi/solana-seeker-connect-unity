@@ -12,6 +12,10 @@ The demo now enables **Devnet MWA testing mode**, so Mock MWA Wallet can be used
 
 ## Validation status
 
+**0.2.2 Android signing fix:** accepts either full signed payloads or detached 64-byte responses only after Ed25519 verification against the exact original message and account public key. Invalid signatures return `INVALID_RESPONSE`; account changes during reauthorization return `ACCOUNT_CHANGED` before signing. Both clear local authorization so the next explicit Connect starts fresh. No automatic signing retry or transaction submission is performed. Earlier 0.2.1 production builds reject detached responses; upgrade for this fix.
+
+For **0.2.2**, **36 native tests and 18 Unity EditMode tests passed**, including independent signature verification, invalid-response rejection, changed-account prevention, token/cache cleanup, and C# disconnected-state reporting. These are automated tests; live phone validation still requires rebuilding the consumer app. No app was built or deployed for this patch.
+
 See [the validation record](docs/VALIDATION.md) for build results and the exact verification boundary. The demo has been tested on a Samsung SM-S918B with Mock MWA Wallet: connection, independently verified message/transaction signatures, rejection, restoration after relaunch, and disconnect. Certified Seeker routing and the remaining lifecycle/submission checklist still require further device testing.
 
 For **0.2.1**, all **29 native tests and 16 Unity EditMode tests passed**. Coverage includes production configuration on supported chains, serialization of the new opt-in, mock-mode restrictions, cache isolation, and restoration of seeded production authorization across client recreation followed by disconnect and empty restore. Existing strict message-signature and transaction tests also passed. The restoration regression uses a simulated Android wallet environment, not a live Jupiter wallet.
@@ -37,9 +41,9 @@ await SeekerConnectManager.InitializeAsync(new SeekerConnectConfig {
 | --- | --- | --- | --- |
 | Both flags false (default) | Certified wallets | Devnet, Testnet, Mainnet | Strict validation; existing certified-only cache |
 | `allowGenericMwa = true`, testing false | Certified or compatible MWA wallets | Devnet, Testnet, Mainnet | Strict validation; separate production MWA cache |
-| `allowMwaTesting = true`, either generic flag value | Certified or compatible MWA wallets, including Mock MWA Wallet | Devnet only | Mock detached-signature compatibility; existing testing cache |
+| `allowMwaTesting = true`, either generic flag value | Certified or compatible MWA wallets, including Mock MWA Wallet | Devnet only | Verified signatures; existing testing cache |
 
-The production flag does not relax signature or transaction payload validation. Only mock mode permits detached-only message signature responses. Enabling both flags still rejects Mainnet and Testnet in C# and Kotlin. Existing callers retain their behavior because both flags default to false, and existing certified-only and testing cache names remain unchanged. These Android options do not change the WebGL transport.
+The production flag does not relax signature or transaction payload validation. Since 0.2.2, all Android modes accept full or detached message-signature responses only after cryptographic verification; mock mode does not bypass verification. Enabling both flags still rejects Mainnet and Testnet in C# and Kotlin. Both flags default to false, and existing certified-only and testing cache names remain unchanged. These Android options do not change the WebGL transport.
 
 The official SDK first tries a previously learned wallet endpoint, then the certified Seeker endpoint, then generic MWA through Android. On first connection, certified routing remains preferred. On an ordinary Android phone, install and configure Jupiter Wallet and select it if Android presents a wallet chooser. Compatibility still needs testing with the intended Jupiter version and phone.
 
@@ -63,6 +67,8 @@ Restoration loads cached authorization without asking the wallet for approval. T
 Certified-only, production MWA, and mock-testing sessions use separate caches, additionally scoped by identity and network. Switching from mock testing to production requires connecting once in the production mode. No authorization tokens are migrated between policies. `DisconnectAsync()` clears the active configuration's local cache; it does not revoke the wallet-side grant or automatically sign out of a game's backend.
 
 A restored address is **not backend authentication**. Preserve server-issued login challenges and server-side signature verification. Preserve server transaction validation and confirmation for checkout. Adding this provider does not require replacing Phantom web support or an existing PSG1/Jupiter flow; those integrations must retain their own routing and validation.
+
+To intentionally switch wallet apps, await `DisconnectAsync()` before `ConnectAsync()`. Connect alone may return the existing cached account. After `INVALID_RESPONSE` from message verification or `ACCOUNT_CHANGED`, 0.2.2 has already cleared that local authorization: show Connect, then obtain a new server challenge for the newly selected account. A cached reauthorization rejected with `AUTHORIZATION_DECLINED` is also cleared by the official SDK. Cancellation or ordinary signing rejection does not automatically clear a valid session.
 
 ## Quick start
 
@@ -113,13 +119,13 @@ In another compatible Unity project, use Package Manager → Install package fro
 https://github.com/CryptoSodi/solana-seeker-connect-unity.git?path=Packages/com.community.seekerconnect.unity
 ```
 
-To pin the tested **0.2.1 implementation** reproducibly, use:
+Historical **0.2.1 implementation** pin (does not include the 0.2.2 signing fix; use the current branch or a newer commit for that fix):
 
 ```text
 https://github.com/CryptoSodi/solana-seeker-connect-unity.git?path=Packages/com.community.seekerconnect.unity#1ba768bcc887cf1decbd49b3220e2fd3725aca7e
 ```
 
-[Implementation commit: `1ba768bcc887cf1decbd49b3220e2fd3725aca7e`](https://github.com/CryptoSodi/solana-seeker-connect-unity/commit/1ba768bcc887cf1decbd49b3220e2fd3725aca7e). The wrapper package version is 0.2.1; its official Android and web SDK dependencies remain 0.2.0.
+[0.2.1 implementation commit: `1ba768bcc887cf1decbd49b3220e2fd3725aca7e`](https://github.com/CryptoSodi/solana-seeker-connect-unity/commit/1ba768bcc887cf1decbd49b3220e2fd3725aca7e). The current wrapper package version is 0.2.2; its official Android and web SDK dependencies remain 0.2.0. Android message verification adds `org.bouncycastle:bcprov-jdk18on:1.86` using its lightweight Ed25519 API without registering a global JCA provider.
 
 Pin a tag or commit for reproducibility, or copy the complete `Packages/com.community.seekerconnect.unity` directory into the destination project's `Packages` folder. Keep `Native~`: it contains the native source, manifest, consumer rules, resources, and Gradle module. The package's editor callback adds that module to Android builds; no manually copied AAR or external dependency resolver is required. Configure IL2CPP, ARM64, minimum SDK 26, and target SDK 36. [Full installation/build instructions](docs/BUILDING.md).
 

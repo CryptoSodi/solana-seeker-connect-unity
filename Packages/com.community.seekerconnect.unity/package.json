@@ -1,6 +1,6 @@
 {
   "name": "com.community.seekerconnect.unity",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "displayName": "Seeker Connect for Unity (Community)",
   "description": "Independent Unity wrapper around Solana Mobile's official Android and web Seeker Connect SDKs.",
   "unity": "6000.0",

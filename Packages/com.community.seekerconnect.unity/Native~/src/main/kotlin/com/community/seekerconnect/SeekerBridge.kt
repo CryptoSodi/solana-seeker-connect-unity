@@ -118,8 +118,7 @@ object SeekerBridge {
                     "signMessage" -> {
                         val account = sdk.restore()?.accounts?.firstOrNull() ?: throw BridgeError("NOT_CONNECTED", "Connect a wallet first")
                         val message = decode(data.getString("payload")); require(message.size in 1..32768)
-                        val signed = sdk.signMessages(host, listOf(account.address), listOf(message)).single()
-                        val signature = Wire.signature(message, signed, allowMwaTesting)
+                        val signature = MessageSigning.sign(sdk, host, message)
                         result.put("signature", encode(signature))
                             .put("signedPayload", encode(message + signature)).put("address", account.address)
                     }
@@ -148,6 +147,10 @@ object SeekerBridge {
             fail(request, "TIMEOUT", "Wallet request timed out. Check transaction status before any retry.")
         } catch (_: CancellationException) {
             fail(request, "CANCELLED", "Wallet operation cancelled or Android host destroyed; submission status may be unknown.")
+        } catch (_: InvalidWalletResponse) {
+            fail(request, "INVALID_RESPONSE", "Wallet returned an invalid message signature or payload. Local authorization was cleared; connect again before requesting a fresh login challenge.")
+        } catch (_: WalletAccountChanged) {
+            fail(request, "ACCOUNT_CHANGED", "Wallet account changed during authorization. Local authorization was cleared; connect again and obtain a fresh login challenge.")
         } catch (e: BridgeError) { fail(request, e.code, e.message ?: e.code)
         } catch (e: SeekerConnectException) { fail(request, e.code.name, "Wallet operation failed: ${e.code.name}. Check the wallet and try again only after checking submission status.")
         } catch (_: IllegalArgumentException) { fail(request, "INVALID_INPUT", "Invalid payload or unexpected wallet response encoding")
