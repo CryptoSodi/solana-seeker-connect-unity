@@ -119,13 +119,13 @@ In another compatible Unity project, use Package Manager → Install package fro
 https://github.com/CryptoSodi/solana-seeker-connect-unity.git?path=Packages/com.community.seekerconnect.unity
 ```
 
-Historical **0.2.1 implementation** pin (does not include the 0.2.2 signing fix; use the current branch or a newer commit for that fix):
+To pin the tested **0.2.2 implementation**, including the Android signing and session-recovery fix:
 
 ```text
-https://github.com/CryptoSodi/solana-seeker-connect-unity.git?path=Packages/com.community.seekerconnect.unity#1ba768bcc887cf1decbd49b3220e2fd3725aca7e
+https://github.com/CryptoSodi/solana-seeker-connect-unity.git?path=Packages/com.community.seekerconnect.unity#2af326d4855407537b95f217aa0a4c1bfc89176b
 ```
 
-[0.2.1 implementation commit: `1ba768bcc887cf1decbd49b3220e2fd3725aca7e`](https://github.com/CryptoSodi/solana-seeker-connect-unity/commit/1ba768bcc887cf1decbd49b3220e2fd3725aca7e). The current wrapper package version is 0.2.2; its official Android and web SDK dependencies remain 0.2.0. Android message verification adds `org.bouncycastle:bcprov-jdk18on:1.86` using its lightweight Ed25519 API without registering a global JCA provider.
+[0.2.2 implementation commit: `2af326d4855407537b95f217aa0a4c1bfc89176b`](https://github.com/CryptoSodi/solana-seeker-connect-unity/commit/2af326d4855407537b95f217aa0a4c1bfc89176b). The current wrapper package version is 0.2.2; its official Android and web SDK dependencies remain 0.2.0. Android message verification adds `org.bouncycastle:bcprov-jdk18on:1.86` using its lightweight Ed25519 API without registering a global JCA provider.
 
 Pin a tag or commit for reproducibility, or copy the complete `Packages/com.community.seekerconnect.unity` directory into the destination project's `Packages` folder. Keep `Native~`: it contains the native source, manifest, consumer rules, resources, and Gradle module. The package's editor callback adds that module to Android builds; no manually copied AAR or external dependency resolver is required. Configure IL2CPP, ARM64, minimum SDK 26, and target SDK 36. [Full installation/build instructions](docs/BUILDING.md).
 
