@@ -14,6 +14,56 @@ The demo now enables **Devnet MWA testing mode**, so Mock MWA Wallet can be used
 
 See [the validation record](docs/VALIDATION.md) for build results and the exact verification boundary. The demo has been tested on a Samsung SM-S918B with Mock MWA Wallet: connection, independently verified message/transaction signatures, rejection, restoration after relaunch, and disconnect. Certified Seeker routing and the remaining lifecycle/submission checklist still require further device testing.
 
+For **0.2.1**, all **29 native tests and 16 Unity EditMode tests passed**. Coverage includes production configuration on supported chains, serialization of the new opt-in, mock-mode restrictions, cache isolation, and restoration of seeded production authorization across client recreation followed by disconnect and empty restore. Existing strict message-signature and transaction tests also passed. The restoration regression uses a simulated Android wallet environment, not a live Jupiter wallet.
+
+Physical Jupiter approval/signing/restoration, certified Seeker routing, and real sign-and-send submission remain pending. No APK or WebGL player was built or deployed for the 0.2.1 change; installing this source version does not update a previously installed demo APK. The work did not modify Battle Cities or replace its existing wallet providers.
+
+## Production Android wallets and Jupiter
+
+The wrapper supports compatible ordinary Android MWA wallets through the official Seeker Connect Android SDK. Configure production use separately from mock testing:
+
+```csharp
+await SeekerConnectManager.InitializeAsync(new SeekerConnectConfig {
+    appName = "My Game",
+    identityUri = yourHttpsIdentity,
+    iconPath = "images/icon.png",
+    chain = "solana:mainnet", // Match your application's and wallet's supported network.
+    allowGenericMwa = true,
+    allowMwaTesting = false
+});
+```
+
+| Configuration | Accepted Android wallets | Networks | Validation and cache |
+| --- | --- | --- | --- |
+| Both flags false (default) | Certified wallets | Devnet, Testnet, Mainnet | Strict validation; existing certified-only cache |
+| `allowGenericMwa = true`, testing false | Certified or compatible MWA wallets | Devnet, Testnet, Mainnet | Strict validation; separate production MWA cache |
+| `allowMwaTesting = true`, either generic flag value | Certified or compatible MWA wallets, including Mock MWA Wallet | Devnet only | Mock detached-signature compatibility; existing testing cache |
+
+The production flag does not relax signature or transaction payload validation. Only mock mode permits detached-only message signature responses. Enabling both flags still rejects Mainnet and Testnet in C# and Kotlin. Existing callers retain their behavior because both flags default to false, and existing certified-only and testing cache names remain unchanged. These Android options do not change the WebGL transport.
+
+The official SDK first tries a previously learned wallet endpoint, then the certified Seeker endpoint, then generic MWA through Android. On first connection, certified routing remains preferred. On an ordinary Android phone, install and configure Jupiter Wallet and select it if Android presents a wallet chooser. Compatibility still needs testing with the intended Jupiter version and phone.
+
+The pinned official SDK has no public package-name targeting option. Its native configuration supports a first-connect wallet URI, but overriding that changes certified first-connect routing; this wrapper does not expose that override or hard-code an unverified Jupiter URI. A wallet URI learned during authorization can be reused for subsequent interactions. See [Android wallet routing and device checks](docs/ANDROID_WALLETS.md).
+
+## Restoring a session after relaunch
+
+Yes: initialize once on app startup, then explicitly restore using the same app identity, chain, and wallet policy:
+
+```csharp
+var session = await SeekerConnectManager.RestoreSessionAsync();
+if (session != null) {
+    // Display session.Account.address as the cached wallet account.
+} else {
+    // Show a Connect button. Its handler awaits ConnectAsync().
+}
+```
+
+Restoration loads cached authorization without asking the wallet for approval. The next signing request opens a new wallet interaction and reauthorizes; a revoked or expired grant may require an explicit reconnect. Restoration is not a persistent live connection and does not guarantee that the next signature request will succeed. Handle `SeekerConnectException` in the caller.
+
+Certified-only, production MWA, and mock-testing sessions use separate caches, additionally scoped by identity and network. Switching from mock testing to production requires connecting once in the production mode. No authorization tokens are migrated between policies. `DisconnectAsync()` clears the active configuration's local cache; it does not revoke the wallet-side grant or automatically sign out of a game's backend.
+
+A restored address is **not backend authentication**. Preserve server-issued login challenges and server-side signature verification. Preserve server transaction validation and confirmation for checkout. Adding this provider does not require replacing Phantom web support or an existing PSG1/Jupiter flow; those integrations must retain their own routing and validation.
+
 ## Quick start
 
 1. Clone this repository and open its root as a Unity project using **6000.6.0f1**, with Android Build Support, SDK/NDK, and OpenJDK installed.
@@ -63,6 +113,14 @@ In another compatible Unity project, use Package Manager → Install package fro
 https://github.com/CryptoSodi/solana-seeker-connect-unity.git?path=Packages/com.community.seekerconnect.unity
 ```
 
+To pin the tested **0.2.1 implementation** reproducibly, use:
+
+```text
+https://github.com/CryptoSodi/solana-seeker-connect-unity.git?path=Packages/com.community.seekerconnect.unity#1ba768bcc887cf1decbd49b3220e2fd3725aca7e
+```
+
+[Implementation commit: `1ba768bcc887cf1decbd49b3220e2fd3725aca7e`](https://github.com/CryptoSodi/solana-seeker-connect-unity/commit/1ba768bcc887cf1decbd49b3220e2fd3725aca7e). The wrapper package version is 0.2.1; its official Android and web SDK dependencies remain 0.2.0.
+
 Pin a tag or commit for reproducibility, or copy the complete `Packages/com.community.seekerconnect.unity` directory into the destination project's `Packages` folder. Keep `Native~`: it contains the native source, manifest, consumer rules, resources, and Gradle module. The package's editor callback adds that module to Android builds; no manually copied AAR or external dependency resolver is required. Configure IL2CPP, ARM64, minimum SDK 26, and target SDK 36. [Full installation/build instructions](docs/BUILDING.md).
 
 ## Architecture
@@ -74,7 +132,7 @@ sequenceDiagram
     participant JNI as Kotlin SeekerBridge
     participant Host as AndroidX WalletHostActivity
     participant SDK as Official SeekerConnect SDK
-    participant Wallet as Certified Seeker wallet
+    participant Wallet as Certified or opted-in MWA wallet
     UI->>CS: await operation
     CS->>JNI: request(id, operation, Base64 payload)
     JNI->>Host: start separate ComponentActivity
@@ -105,11 +163,12 @@ Unity's installed `UnityPlayerActivity` directly extends `android.app.Activity`,
 
 The package resolves `com.solanamobile:seeker-connect:0.2.0` from Maven Central, including its core, AndroidX activity, and MWA client transitive dependencies. The build uses AGP 9.0.0, Gradle 9.1.0, Kotlin 2.4.10, coroutines 1.11.0, and lifecycle 2.11.0. Exact SDK API signatures were checked against official source and the published source artifact. [Research notes and references](docs/RESEARCH.md).
 
-The default Seeker provider rejects `OTHER` and `NONE` wallet availability. Set `allowMwaTesting = true` with `chain = "solana:devnet"` to allow `OTHER` through the official SDK's MWA fallback. Missing wallets are still rejected, and test authorizations use a separate cache from certified-only mode. Jupiter Wallet and Play Solana PSG1 compatibility is not assumed. Solana.Unity-SDK can optionally be used by the host game to construct transactions; it is not a dependency.
+The default Seeker provider rejects `OTHER` and `NONE` wallet availability. Set `allowGenericMwa = true` for production-compatible generic wallets, or `allowMwaTesting = true` with `chain = "solana:devnet"` for mock testing. Missing wallets are still rejected. Jupiter Wallet and Play Solana PSG1 device compatibility is not assumed. Solana.Unity-SDK can optionally be used by the host game to construct transactions; it is not a dependency.
 
 ## Documentation
 
 - [Build, export, and identity setup](docs/BUILDING.md)
+- [Android production wallets, Jupiter selection, and session restoration](docs/ANDROID_WALLETS.md)
 - [C# API and error reference](Packages/com.community.seekerconnect.unity/Documentation~/API.md)
 - [Architecture, lifecycle, and security](docs/ARCHITECTURE.md)
 - [Device testing and troubleshooting](docs/TESTING.md)
